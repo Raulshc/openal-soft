@@ -1702,6 +1702,15 @@ AL_API ALvoid AL_APIENTRY alGenSources(ALsizei n, ALuint *sources)
             break;
         }
         sources[cur] = source->id;
+
+        if (alIsAttachEffectGenSourcesSOFT())
+        {
+            alSourcei(source->id, AL_DIRECT_FILTER, context->Device->EffSrcs.filter[0]);
+            alSource3i(source->id, AL_AUXILIARY_SEND_FILTER,
+                        context->Device->EffSrcs.uEffectSlot, 0,
+                        context->Device->EffSrcs.filter[1]);
+            source->Attached = AL_TRUE;
+        }
     }
 
     ALCcontext_DecRef(context);
@@ -1730,7 +1739,12 @@ AL_API ALvoid AL_APIENTRY alDeleteSources(ALsizei n, const ALuint *sources)
     for(i = 0;i < n;i++)
     {
         if((Source=LookupSource(context, sources[i])) != NULL)
+        {
+            if (Source->Attached) 
+                alSource3i(Source->id, AL_AUXILIARY_SEND_FILTER, 
+                            AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
             FreeSource(context, Source);
+        }
     }
 
 done:

@@ -297,6 +297,10 @@ static const struct {
     DECL(alEventCallbackSOFT),
     DECL(alGetPointerSOFT),
     DECL(alGetPointervSOFT),
+
+    DECL(alAttachEffectGenSourcesSOFT),
+    DECL(alDetachEffectGenSourcesSOFT),
+    DECL(alIsAttachEffectGenSourcesSOFT),
 };
 #undef DECL
 
@@ -732,6 +736,7 @@ static const ALchar alExtList[] =
     "AL_SOFT_block_alignment "
     "AL_SOFT_deferred_updates "
     "AL_SOFT_direct_channels "
+    "AL_SOFTX_effect_sources "
     "AL_SOFTX_events "
     "AL_SOFTX_filter_gain_ex "
     "AL_SOFT_gain_clamp_ex "
@@ -2416,6 +2421,11 @@ static void InitDevice(ALCdevice *device, enum DeviceType type)
     device->AmbiUp = NULL;
     device->Stablizer = NULL;
     device->Limiter = NULL;
+
+    device->EffSrcs.uEffectSlot = 0;
+    device->EffSrcs.filter[0] = 0;
+    device->EffSrcs.filter[1] = 0;
+    device->EffSrcs.bAttached = ALC_FALSE;
 
     VECTOR_INIT(device->BufferList);
     almtx_init(&device->BufferLock, almtx_plain);

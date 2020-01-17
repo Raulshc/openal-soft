@@ -827,3 +827,51 @@ void LoadReverbPreset(const char *name, ALeffect *effect)
 
     WARN("Reverb preset '%s' not found\n", name);
 }
+
+AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint uEffectSlot, ALuint filter[2])
+{
+    ALCcontext *context;
+
+    context = alcGetCurrentContext();
+
+    if (!context) 
+        return AL_FALSE;
+
+    if (!alIsAuxiliaryEffectSlot(uEffectSlot))
+        return AL_FALSE;
+    if (!(alIsFilter(filter[0]) && alIsFilter(filter[1])))
+        return AL_FALSE;
+
+    context->Device->EffSrcs.uEffectSlot = uEffectSlot;
+    context->Device->EffSrcs.filter[0] = filter[0];
+    context->Device->EffSrcs.filter[1] = filter[1];
+    context->Device->EffSrcs.bAttached = AL_TRUE;
+
+    return AL_TRUE;
+}
+
+AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
+{
+    ALCcontext *context;
+
+    context = alcGetCurrentContext();
+
+    if (!context) return;
+
+    context->Device->EffSrcs.uEffectSlot = 0;
+    context->Device->EffSrcs.filter[0] = 0;
+    context->Device->EffSrcs.filter[1] = 0;
+    context->Device->EffSrcs.bAttached = AL_FALSE;
+}
+
+AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void)
+{
+    ALCcontext *context;
+
+    context = alcGetCurrentContext();
+
+    if (!context) 
+        return AL_FALSE;
+
+    return context->Device->EffSrcs.bAttached ? AL_TRUE : AL_FALSE;
+}

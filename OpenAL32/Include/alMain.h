@@ -634,6 +634,12 @@ typedef struct RealMixParams {
 
 typedef void (*POSTPROCESS)(ALCdevice *device, ALsizei SamplesToDo);
 
+typedef struct EffectSources {
+    ALuint    uEffectSlot;
+    ALuint    filter[2];
+    ALboolean bAttached;
+} EffectSources;
+
 struct ALCdevice_struct {
     RefCount ref;
 
@@ -710,6 +716,9 @@ struct ALCdevice_struct {
     ALuint64 ClockBase;
     ALuint SamplesDone;
     ALuint FixedLatency;
+
+    /* Sources with effect state */
+    EffectSources EffSrcs;
 
     /* Temp storage used for mixer processing. */
     alignas(16) ALfloat TempBuffer[4][BUFFERSIZE];

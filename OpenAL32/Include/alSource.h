@@ -107,6 +107,9 @@ typedef struct ALsource {
 
     /** Self ID */
     ALuint id;
+
+    /*Attached flag*/
+    ALboolean Attached;
 } ALsource;
 
 void UpdateAllSourceProps(ALCcontext *context);
