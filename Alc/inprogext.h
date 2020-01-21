@@ -82,11 +82,11 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 
 #ifndef AL_SOFT_effect_sources
 #define AL_SOFT_effect_sources
-typedef void(AL_APIENTRY*LPALATTACHEFFECTGENSOURCESSOFT)(ALuint effectSlot, ALuint filter[2]);
+typedef void(AL_APIENTRY*LPALATTACHEFFECTGENSOURCESSOFT)(ALuint effectSlot);
 typedef void(AL_APIENTRY*LPALDETACHEFFECTGENSOURCESSOFT)(void);
 typedef void(AL_APIENTRY*LPALISATTACHEFFECTGENSOURCESSOFT)(void);
 #ifdef AL_ALEXT_PROTOTYPES
-AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint effectSlot, ALuint filter[2]);
+AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint effectSlot);
 AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void);
 AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void);
 #endif

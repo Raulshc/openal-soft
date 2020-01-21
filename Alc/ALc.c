@@ -2423,8 +2423,6 @@ static void InitDevice(ALCdevice *device, enum DeviceType type)
     device->Limiter = NULL;
 
     device->EffSrcs.uEffectSlot = 0;
-    device->EffSrcs.filter[0] = 0;
-    device->EffSrcs.filter[1] = 0;
     device->EffSrcs.bAttached = ALC_FALSE;
 
     VECTOR_INIT(device->BufferList);

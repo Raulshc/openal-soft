@@ -636,7 +636,6 @@ typedef void (*POSTPROCESS)(ALCdevice *device, ALsizei SamplesToDo);
 
 typedef struct EffectSources {
     ALuint    uEffectSlot;
-    ALuint    filter[2];
     ALboolean bAttached;
 } EffectSources;
 

@@ -828,24 +828,33 @@ void LoadReverbPreset(const char *name, ALeffect *effect)
     WARN("Reverb preset '%s' not found\n", name);
 }
 
-AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint uEffectSlot, ALuint filter[2])
+AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint uEffectSlot)
 {
     ALCcontext *context;
+    ALboolean  ret;
+    ALuint     id;
 
-    context = alcGetCurrentContext();
+    context = GetContextRef();
+    id = uEffectSlot-1;
 
     if (!context) 
         return AL_FALSE;
 
-    if (!alIsAuxiliaryEffectSlot(uEffectSlot))
+    LockEffectSlotList(context);
+    ret = (UNLIKELY(id >= VECTOR_SIZE(context->EffectSlotList)) ?
+                    AL_FALSE : AL_TRUE);
+    UnlockEffectSlotList(context);
+
+    if (!ret)
+    {
+        ALCcontext_DecRef(context);
         return AL_FALSE;
-    if (!(alIsFilter(filter[0]) && alIsFilter(filter[1])))
-        return AL_FALSE;
+    }
 
     context->Device->EffSrcs.uEffectSlot = uEffectSlot;
-    context->Device->EffSrcs.filter[0] = filter[0];
-    context->Device->EffSrcs.filter[1] = filter[1];
     context->Device->EffSrcs.bAttached = AL_TRUE;
+
+    ALCcontext_DecRef(context);
 
     return AL_TRUE;
 }
@@ -854,24 +863,29 @@ AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
 {
     ALCcontext *context;
 
-    context = alcGetCurrentContext();
+    context = GetContextRef();
 
     if (!context) return;
 
     context->Device->EffSrcs.uEffectSlot = 0;
-    context->Device->EffSrcs.filter[0] = 0;
-    context->Device->EffSrcs.filter[1] = 0;
     context->Device->EffSrcs.bAttached = AL_FALSE;
+
+    ALCcontext_DecRef(context);
 }
 
 AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void)
 {
     ALCcontext *context;
+    ALboolean  ret;
 
-    context = alcGetCurrentContext();
+    context = GetContextRef();
 
     if (!context) 
         return AL_FALSE;
 
-    return context->Device->EffSrcs.bAttached ? AL_TRUE : AL_FALSE;
+    ret = context->Device->EffSrcs.bAttached ? AL_TRUE : AL_FALSE;
+
+    ALCcontext_DecRef(context);
+
+    return ret;
 }

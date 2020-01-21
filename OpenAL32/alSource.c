@@ -1703,12 +1703,11 @@ AL_API ALvoid AL_APIENTRY alGenSources(ALsizei n, ALuint *sources)
         }
         sources[cur] = source->id;
 
-        if (alIsAttachEffectGenSourcesSOFT())
+        if(context->Device->EffSrcs.bAttached)
         {
-            alSourcei(source->id, AL_DIRECT_FILTER, context->Device->EffSrcs.filter[0]);
             alSource3i(source->id, AL_AUXILIARY_SEND_FILTER,
                         context->Device->EffSrcs.uEffectSlot, 0,
-                        context->Device->EffSrcs.filter[1]);
+                        AL_FILTER_NULL);
             source->Attached = AL_TRUE;
         }
     }
