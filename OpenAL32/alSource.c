@@ -1702,14 +1702,6 @@ AL_API ALvoid AL_APIENTRY alGenSources(ALsizei n, ALuint *sources)
             break;
         }
         sources[cur] = source->id;
-
-        if(context->Device->EffSrcs.bAttached)
-        {
-            alSource3i(source->id, AL_AUXILIARY_SEND_FILTER,
-                        context->Device->EffSrcs.uEffectSlot, 0,
-                        AL_FILTER_NULL);
-            source->Attached = AL_TRUE;
-        }
     }
 
     ALCcontext_DecRef(context);
@@ -2564,6 +2556,34 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
         source->state = AL_PLAYING;
         source->VoiceIdx = vidx;
 
+        /* Attach source(s) to slot acc. to its channel format */
+        if (device->EffSrcs.Attached)
+        {
+            ALboolean detect = AL_FALSE;
+            ALuint slot;
+
+            switch(device->EffSrcs.SrcType)
+            {
+                case AL_3D_SOURCES_SOFT:
+                    if(voice->NumChannels == 1)
+                        detect = AL_TRUE;
+                    break;
+
+                case AL_2D_SOURCES_SOFT:
+                    if(voice->NumChannels >= 2)
+                        detect = AL_TRUE;
+                    break;
+
+                case AL_ALL_SOURCES_SOFT:
+                    detect = AL_TRUE;
+                    break;
+            }
+
+            slot = detect ? device->EffSrcs.EffectSlot : AL_EFFECTSLOT_NULL;
+            alSource3i(source->id, AL_AUXILIARY_SEND_FILTER,
+                        slot, 0, AL_FILTER_NULL);
+            source->Attached = detect;
+        }
         SendStateChangeEvent(context, source->id, AL_PLAYING);
     }
     ALCdevice_Unlock(device);

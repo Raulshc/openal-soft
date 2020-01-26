@@ -2422,8 +2422,9 @@ static void InitDevice(ALCdevice *device, enum DeviceType type)
     device->Stablizer = NULL;
     device->Limiter = NULL;
 
-    device->EffSrcs.uEffectSlot = 0;
-    device->EffSrcs.bAttached = ALC_FALSE;
+    device->EffSrcs.EffectSlot = 0;
+    device->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
+    device->EffSrcs.Attached = ALC_FALSE;
 
     VECTOR_INIT(device->BufferList);
     almtx_init(&device->BufferLock, almtx_plain);

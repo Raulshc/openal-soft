@@ -828,17 +828,16 @@ void LoadReverbPreset(const char *name, ALeffect *effect)
     WARN("Reverb preset '%s' not found\n", name);
 }
 
-AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint uEffectSlot)
+AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint EffectSlot, ALenum param)
 {
     ALCcontext *context;
     ALboolean  ret;
     ALuint     id;
 
     context = GetContextRef();
-    id = uEffectSlot-1;
+    id = EffectSlot-1;
 
-    if (!context) 
-        return AL_FALSE;
+    if (!context) return;
 
     LockEffectSlotList(context);
     ret = (UNLIKELY(id >= VECTOR_SIZE(context->EffectSlotList)) ?
@@ -847,16 +846,25 @@ AL_API ALboolean AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint uEffectSlot)
 
     if (!ret)
     {
+        alSetError(context, AL_INVALID_VALUE, 
+                    "Attaching sources to slot ID %d", EffectSlot);
         ALCcontext_DecRef(context);
-        return AL_FALSE;
+        return;
     }
 
-    context->Device->EffSrcs.uEffectSlot = uEffectSlot;
-    context->Device->EffSrcs.bAttached = AL_TRUE;
+    if(!(param >= AL_3D_SOURCES_SOFT && param <= AL_ALL_SOURCES_SOFT))
+    {
+        alSetError(context, AL_INVALID_VALUE, 
+                    "Invalid source integer property 0x%04x", param);
+        ALCcontext_DecRef(context);
+        return;
+    }
+
+    context->Device->EffSrcs.EffectSlot = EffectSlot;
+    context->Device->EffSrcs.SrcType = param;
+    context->Device->EffSrcs.Attached = AL_TRUE;
 
     ALCcontext_DecRef(context);
-
-    return AL_TRUE;
 }
 
 AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
@@ -867,8 +875,9 @@ AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
 
     if (!context) return;
 
-    context->Device->EffSrcs.uEffectSlot = 0;
-    context->Device->EffSrcs.bAttached = AL_FALSE;
+    context->Device->EffSrcs.EffectSlot = 0;
+    context->Device->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
+    context->Device->EffSrcs.Attached = AL_FALSE;
 
     ALCcontext_DecRef(context);
 }
@@ -883,7 +892,7 @@ AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void)
     if (!context) 
         return AL_FALSE;
 
-    ret = context->Device->EffSrcs.bAttached ? AL_TRUE : AL_FALSE;
+    ret = context->Device->EffSrcs.Attached ? AL_TRUE : AL_FALSE;
 
     ALCcontext_DecRef(context);
 

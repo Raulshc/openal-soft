@@ -635,8 +635,9 @@ typedef struct RealMixParams {
 typedef void (*POSTPROCESS)(ALCdevice *device, ALsizei SamplesToDo);
 
 typedef struct EffectSources {
-    ALuint    uEffectSlot;
-    ALboolean bAttached;
+    ALuint    EffectSlot;
+    ALenum    SrcType;
+    ALboolean Attached;
 } EffectSources;
 
 struct ALCdevice_struct {
