@@ -100,6 +100,11 @@ AL_API ALvoid AL_APIENTRY alGetSourceSendControlSOFT(ALuint source, ALuint send,
 #endif
 #endif
 
+#ifndef ALC_SOFT_close_info
+#define ALC_SOFT_close_info
+#define ALC_CLOSE_INFO_SOFT                      0x350
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
