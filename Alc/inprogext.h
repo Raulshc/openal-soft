@@ -80,6 +80,11 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 #endif
 #endif
 
+#ifndef ALC_SOFT_close_info
+#define ALC_SOFT_close_info
+#define ALC_CLOSE_INFO_SOFT                      0x350
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

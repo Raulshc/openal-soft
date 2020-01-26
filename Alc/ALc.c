@@ -327,6 +327,7 @@ static const struct {
     DECL(ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER),
     DECL(ALC_CAPTURE_SAMPLES),
     DECL(ALC_CONNECTED),
+    DECL(ALC_CLOSE_INFO_SOFT),
 
     DECL(ALC_EFX_MAJOR_VERSION),
     DECL(ALC_EFX_MINOR_VERSION),
@@ -774,6 +775,9 @@ static ALeffect DefaultEffect;
  */
 static ALCboolean SuspendDefers = ALC_TRUE;
 
+/* Flag to determine whether the device was closed */
+static ALboolean DevClosed = ALC_FALSE;
+
 
 /************************************************
  * ALC information
@@ -785,7 +789,8 @@ static const ALCchar alcExtensionList[] =
     "ALC_ENUMERATE_ALL_EXT ALC_ENUMERATION_EXT ALC_EXT_CAPTURE "
     "ALC_EXT_DEDICATED ALC_EXT_disconnect ALC_EXT_EFX "
     "ALC_EXT_thread_local_context ALC_SOFT_device_clock ALC_SOFT_HRTF "
-    "ALC_SOFT_loopback ALC_SOFT_output_limiter ALC_SOFT_pause_device";
+    "ALC_SOFT_loopback ALC_SOFT_output_limiter ALC_SOFT_pause_device "
+    "ALC_SOFTX_close_info";
 static const ALCint alcMajorVersion = 1;
 static const ALCint alcMinorVersion = 1;
 
@@ -3474,6 +3479,10 @@ static ALCsizei GetIntegerv(ALCdevice *device, ALCenum param, ALCsizei size, ALC
             values[0] = ATOMIC_LOAD(&device->Connected, almemory_order_acquire);
             return 1;
 
+        case ALC_CLOSE_INFO_SOFT:
+            if (values[0] = DevClosed) DevClosed = ALC_FALSE;
+            return 1;
+
         case ALC_HRTF_SOFT:
             values[0] = (device->HrtfHandle ? ALC_TRUE : ALC_FALSE);
             return 1;
@@ -4259,7 +4268,7 @@ ALC_API ALCboolean ALC_APIENTRY alcCloseDevice(ALCdevice *device)
 
     ALCdevice_DecRef(device);
 
-    return ALC_TRUE;
+    return DevClosed = ALC_TRUE;
 }
 
 
