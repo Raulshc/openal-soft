@@ -108,8 +108,9 @@ typedef struct ALsource {
     /** Self ID */
     ALuint id;
 
-    /*Attached flag*/
+    /*Attached flags*/
     ALboolean Attached;
+    ALuint AttachChannels;
 } ALsource;
 
 void UpdateAllSourceProps(ALCcontext *context);

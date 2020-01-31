@@ -1702,6 +1702,7 @@ AL_API ALvoid AL_APIENTRY alGenSources(ALsizei n, ALuint *sources)
             break;
         }
         sources[cur] = source->id;
+        source->AttachChannels = AL_NONE;
     }
 
     ALCcontext_DecRef(context);
@@ -1731,9 +1732,11 @@ AL_API ALvoid AL_APIENTRY alDeleteSources(ALsizei n, const ALuint *sources)
     {
         if((Source=LookupSource(context, sources[i])) != NULL)
         {
+            ALint ivals[3] = {AL_EFFECTSLOT_NULL, 0,AL_FILTER_NULL};
+
             if (Source->Attached) 
-                alSource3i(Source->id, AL_AUXILIARY_SEND_FILTER, 
-                            AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+                SetSourceiv(Source, context, AL_AUXILIARY_SEND_FILTER, ivals);
+
             FreeSource(context, Source);
         }
     }
@@ -2436,6 +2439,7 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
         ALbufferlistitem *BufferList;
         bool start_fading = false;
         ALint vidx = -1;
+        ALboolean ret;
 
         source = LookupSource(context, sources[i]);
         /* Check that there is a queue containing at least one valid, non zero
@@ -2556,11 +2560,22 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
         source->state = AL_PLAYING;
         source->VoiceIdx = vidx;
 
-        /* Attach source(s) to slot acc. to its channel format */
-        if (device->EffSrcs.Attached)
+        /* Attach source(s) to slot acc. to its channel format.
+         * First, the library must check whether the stored slot still
+         * exists or if it was erased. */
+        LockEffectSlotList(context);
+        ret = (UNLIKELY(device->EffSrcs.EffectSlot >= VECTOR_SIZE(
+                context->EffectSlotList)) ? AL_FALSE : AL_TRUE);
+        UnlockEffectSlotList(context);
+
+        if(!ret)
+            SETERR_GOTO(context, AL_INVALID_VALUE, no_attach, 
+                    "Attaching sources to slot ID %d", device->EffSrcs.EffectSlot);
+
+        if (device->EffSrcs.Attached && source->AttachChannels != voice->NumChannels)
         {
             ALboolean detect = AL_FALSE;
-            ALuint slot;
+            ALint ivals[3] = {AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL};
 
             switch(device->EffSrcs.SrcType)
             {
@@ -2579,11 +2594,12 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
                     break;
             }
 
-            slot = detect ? device->EffSrcs.EffectSlot : AL_EFFECTSLOT_NULL;
-            alSource3i(source->id, AL_AUXILIARY_SEND_FILTER,
-                        slot, 0, AL_FILTER_NULL);
+            if(detect) ivals[0] = device->EffSrcs.EffectSlot;
+            SetSourceiv(source, context, AL_AUXILIARY_SEND_FILTER, ivals);
             source->Attached = detect;
+            source->AttachChannels = voice->NumChannels;
         }
+no_attach:
         SendStateChangeEvent(context, source->id, AL_PLAYING);
     }
     ALCdevice_Unlock(device);
@@ -3156,6 +3172,9 @@ static void InitSourceParams(ALsource *Source, ALsizei num_sends)
     ATOMIC_FLAG_TEST_AND_SET(&Source->PropsClean, almemory_order_relaxed);
 
     Source->VoiceIdx = -1;
+
+    Source->Attached = AL_FALSE;
+    Source->AttachChannels = AL_NONE;
 }
 
 static void DeinitSource(ALsource *source, ALsizei num_sends)
