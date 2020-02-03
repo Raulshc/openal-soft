@@ -30,6 +30,7 @@
 #include "alEffect.h"
 #include "alError.h"
 
+#include "backends/base.h"
 
 extern inline void LockEffectList(ALCdevice *device);
 extern inline void UnlockEffectList(ALCdevice *device);
@@ -828,14 +829,16 @@ void LoadReverbPreset(const char *name, ALeffect *effect)
     WARN("Reverb preset '%s' not found\n", name);
 }
 
-AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint EffectSlot, ALenum param)
+AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint effectSlot, ALenum param, ALuint send)
 {
     ALCcontext *context;
+    ALCdevice *device;
     ALboolean  ret;
     ALuint     id;
+    ALuint     NumAuxSends;
 
     context = GetContextRef();
-    id = EffectSlot-1;
+    id = effectSlot-1;
 
     if (!context) return;
 
@@ -846,23 +849,38 @@ AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint EffectSlot, ALenum
 
     if (!ret)
     {
-        alSetError(context, AL_INVALID_VALUE, 
-                    "Attaching sources to slot ID %d", EffectSlot);
+        alSetError(context, AL_INVALID_VALUE,
+                    "Attaching sources to slot ID %d", effectSlot);
+        ALCcontext_DecRef(context);
+        return;
+    }
+
+    device = context->Device;
+    ALCdevice_Lock(device);
+    NumAuxSends = (ALuint)device->NumAuxSends;
+    ALCdevice_Unlock(device);
+
+    if (send >= NumAuxSends)
+    {
+        alSetError(context, AL_INVALID_VALUE,
+                    "Invalid source send ID %d", send);
         ALCcontext_DecRef(context);
         return;
     }
 
     if(!(param >= AL_3D_SOURCES_SOFT && param <= AL_ALL_SOURCES_SOFT))
     {
-        alSetError(context, AL_INVALID_VALUE, 
+        alSetError(context, AL_INVALID_VALUE,
                     "Invalid source integer property 0x%04x", param);
         ALCcontext_DecRef(context);
         return;
     }
 
-    context->Device->EffSrcs.EffectSlot = EffectSlot;
-    context->Device->EffSrcs.SrcType = param;
-    context->Device->EffSrcs.Attached = AL_TRUE;
+    context->EffSrcs.IsEnabled = AL_TRUE;
+    context->EffSrcs.EffectSlot = effectSlot;
+    context->EffSrcs.Send = send;
+    context->EffSrcs.SrcType = param;
+    context->EffSrcs.Channels = AL_NONE;
 
     ALCcontext_DecRef(context);
 }
@@ -875,9 +893,11 @@ AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
 
     if (!context) return;
 
-    context->Device->EffSrcs.EffectSlot = 0;
-    context->Device->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
-    context->Device->EffSrcs.Attached = AL_FALSE;
+    context->EffSrcs.IsEnabled = AL_FALSE;
+    context->EffSrcs.EffectSlot = AL_EFFECTSLOT_NULL;
+    context->EffSrcs.Send = 0;
+    context->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
+    context->EffSrcs.Channels = AL_NONE;
 
     ALCcontext_DecRef(context);
 }
@@ -892,7 +912,7 @@ AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void)
     if (!context) 
         return AL_FALSE;
 
-    ret = context->Device->EffSrcs.Attached ? AL_TRUE : AL_FALSE;
+    ret = context->EffSrcs.IsEnabled ? AL_TRUE : AL_FALSE;
 
     ALCcontext_DecRef(context);
 

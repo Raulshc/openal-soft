@@ -2422,10 +2422,6 @@ static void InitDevice(ALCdevice *device, enum DeviceType type)
     device->Stablizer = NULL;
     device->Limiter = NULL;
 
-    device->EffSrcs.EffectSlot = 0;
-    device->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
-    device->EffSrcs.Attached = ALC_FALSE;
-
     VECTOR_INIT(device->BufferList);
     almtx_init(&device->BufferLock, almtx_plain);
 
@@ -2642,6 +2638,11 @@ static ALvoid InitContext(ALCcontext *Context)
 
     Context->ExtensionList = alExtList;
 
+    Context->EffSrcs.IsEnabled = ALC_FALSE;
+    Context->EffSrcs.EffectSlot = AL_EFFECTSLOT_NULL;
+    Context->EffSrcs.Send = 0; /*Send 0*/
+    Context->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
+    Context->EffSrcs.Channels = AL_NONE;
 
     listener->Params.Matrix = IdentityMatrixf;
     aluVectorSet(&listener->Params.Velocity, 0.0f, 0.0f, 0.0f, 0.0f);
