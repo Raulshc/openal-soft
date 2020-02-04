@@ -1021,8 +1021,8 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
             }
             UnlockFilterList(device);
 
-            if (Source->EffSrcs.IsEnabled) 
-                Source->EffSrcs.IsEnabled = AL_FALSE;
+            if (Source->SrcEff.IsEnabled)
+                Source->SrcEff.IsEnabled = AL_FALSE;
 
             if(slot != Source->Send[values[1]].Slot && IsPlayingOrPaused(Source))
             {
@@ -2558,22 +2558,22 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
         /* Attach source(s) to slot acc. to its channel format.
          * First, the library must check whether the stored slot still
          * exists or if it was erased. */
-        if (source->EffSrcs.IsEnabled && source->EffSrcs.Channels != voice->NumChannels)
+        if (source->SrcEff.IsEnabled && source->SrcEff.Channels != voice->NumChannels)
         {
             ALboolean detect = AL_FALSE;
-            ALint ivals[3] = {source->EffSrcs.EffectSlot, 
-                              source->EffSrcs.Send, AL_FILTER_NULL};
+            ALint ivals[3] = {source->SrcEff.EffectSlot,
+                              source->SrcEff.Send, AL_FILTER_NULL};
 
             LockEffectSlotList(context);
-            ret = (UNLIKELY(source->EffSrcs.EffectSlot-1 >= VECTOR_SIZE(
+            ret = (UNLIKELY(source->SrcEff.EffectSlot-1 >= VECTOR_SIZE(
                     context->EffectSlotList)) ? AL_FALSE : AL_TRUE);
             UnlockEffectSlotList(context);
 
             if(!ret)
                 SETERR_GOTO(context, AL_INVALID_VALUE, no_attach, 
-                        "Attaching sources to slot ID %d", source->EffSrcs.EffectSlot);
+                        "Attaching sources to slot ID %d", source->SrcEff.EffectSlot);
 
-            switch(source->EffSrcs.SrcType)
+            switch(source->SrcEff.SrcType)
             {
                 case AL_3D_SOURCES_SOFT:
                     if(voice->NumChannels == 1)
@@ -2593,7 +2593,7 @@ AL_API ALvoid AL_APIENTRY alSourcePlayv(ALsizei n, const ALuint *sources)
             if(detect)
                 SetSourceiv(source, context, AL_AUXILIARY_SEND_FILTER, ivals);
 
-            source->EffSrcs.Channels = voice->NumChannels;
+            source->SrcEff.Channels = voice->NumChannels;
         }
 no_attach:
         SendStateChangeEvent(context, source->id, AL_PLAYING);
@@ -3169,11 +3169,11 @@ static void InitSourceParams(ALsource *Source, ALsizei num_sends)
 
     Source->VoiceIdx = -1;
 
-    Source->EffSrcs.IsEnabled = AL_FALSE;
-    Source->EffSrcs.EffectSlot = AL_EFFECTSLOT_NULL;
-    Source->EffSrcs.Send = 0; /*Send 0*/
-    Source->EffSrcs.SrcType = AL_NONE;
-    Source->EffSrcs.Channels = AL_NONE;
+    Source->SrcEff.IsEnabled = AL_FALSE;
+    Source->SrcEff.EffectSlot = AL_EFFECTSLOT_NULL;
+    Source->SrcEff.Send = 0; /*Send 0*/
+    Source->SrcEff.SrcType = AL_NONE;
+    Source->SrcEff.Channels = AL_NONE;
 }
 
 static void DeinitSource(ALsource *source, ALsizei num_sends)
@@ -3700,8 +3700,8 @@ static ALsource *AllocSource(ALCcontext *context)
     memset(source, 0, sizeof(*source));
     InitSourceParams(source, device->NumAuxSends);
 
-    if (context->EffSrcs.IsEnabled)
-        memcpy(&source->EffSrcs, &context->EffSrcs, sizeof(EffectSources));
+    if (context->SrcEff.IsEnabled)
+        memcpy(&source->SrcEff, &context->SrcEff, sizeof(SourceEffect));
 
     /* Add 1 to avoid source ID 0. */
     source->id = ((lidx<<6) | slidx) + 1;

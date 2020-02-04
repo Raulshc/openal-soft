@@ -108,8 +108,8 @@ typedef struct ALsource {
     /** Self ID */
     ALuint id;
 
-    /*Effect Sources*/
-    EffectSources EffSrcs;
+    /* Source Effect*/
+    SourceEffect SrcEff;
 } ALsource;
 
 void UpdateAllSourceProps(ALCcontext *context);

@@ -876,11 +876,11 @@ AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint effectSlot, ALenum
         return;
     }
 
-    context->EffSrcs.IsEnabled = AL_TRUE;
-    context->EffSrcs.EffectSlot = effectSlot;
-    context->EffSrcs.Send = send;
-    context->EffSrcs.SrcType = param;
-    context->EffSrcs.Channels = AL_NONE;
+    context->SrcEff.IsEnabled = AL_TRUE;
+    context->SrcEff.EffectSlot = effectSlot;
+    context->SrcEff.Send = send;
+    context->SrcEff.SrcType = param;
+    context->SrcEff.Channels = AL_NONE;
 
     ALCcontext_DecRef(context);
 }
@@ -893,11 +893,11 @@ AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void)
 
     if (!context) return;
 
-    context->EffSrcs.IsEnabled = AL_FALSE;
-    context->EffSrcs.EffectSlot = AL_EFFECTSLOT_NULL;
-    context->EffSrcs.Send = 0;
-    context->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
-    context->EffSrcs.Channels = AL_NONE;
+    context->SrcEff.IsEnabled = AL_FALSE;
+    context->SrcEff.EffectSlot = AL_EFFECTSLOT_NULL;
+    context->SrcEff.Send = 0;
+    context->SrcEff.SrcType = AL_3D_SOURCES_SOFT;
+    context->SrcEff.Channels = AL_NONE;
 
     ALCcontext_DecRef(context);
 }
@@ -912,7 +912,7 @@ AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void)
     if (!context) 
         return AL_FALSE;
 
-    ret = context->EffSrcs.IsEnabled ? AL_TRUE : AL_FALSE;
+    ret = context->SrcEff.IsEnabled ? AL_TRUE : AL_FALSE;
 
     ALCcontext_DecRef(context);
 

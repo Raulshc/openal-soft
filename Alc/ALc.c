@@ -690,6 +690,10 @@ static const struct {
     DECL(AL_EVENT_TYPE_ERROR_SOFT),
     DECL(AL_EVENT_TYPE_PERFORMANCE_SOFT),
     DECL(AL_EVENT_TYPE_DEPRECATED_SOFT),
+
+    DECL(AL_3D_SOURCES_SOFT),
+    DECL(AL_2D_SOURCES_SOFT),
+    DECL(AL_ALL_SOURCES_SOFT),
 };
 #undef DECL
 
@@ -736,9 +740,9 @@ static const ALchar alExtList[] =
     "AL_SOFT_block_alignment "
     "AL_SOFT_deferred_updates "
     "AL_SOFT_direct_channels "
-    "AL_SOFTX_effect_sources "
     "AL_SOFTX_events "
     "AL_SOFTX_filter_gain_ex "
+    "AL_SOFTX_source_effect "
     "AL_SOFT_gain_clamp_ex "
     "AL_SOFT_loop_points "
     "AL_SOFTX_map_buffer "
@@ -2638,11 +2642,11 @@ static ALvoid InitContext(ALCcontext *Context)
 
     Context->ExtensionList = alExtList;
 
-    Context->EffSrcs.IsEnabled = ALC_FALSE;
-    Context->EffSrcs.EffectSlot = AL_EFFECTSLOT_NULL;
-    Context->EffSrcs.Send = 0; /*Send 0*/
-    Context->EffSrcs.SrcType = AL_3D_SOURCES_SOFT;
-    Context->EffSrcs.Channels = AL_NONE;
+    Context->SrcEff.IsEnabled = ALC_FALSE;
+    Context->SrcEff.EffectSlot = AL_EFFECTSLOT_NULL;
+    Context->SrcEff.Send = 0; /*Send 0*/
+    Context->SrcEff.SrcType = AL_3D_SOURCES_SOFT;
+    Context->SrcEff.Channels = AL_NONE;
 
     listener->Params.Matrix = IdentityMatrixf;
     aluVectorSet(&listener->Params.Velocity, 0.0f, 0.0f, 0.0f, 0.0f);

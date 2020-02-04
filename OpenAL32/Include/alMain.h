@@ -634,13 +634,13 @@ typedef struct RealMixParams {
 
 typedef void (*POSTPROCESS)(ALCdevice *device, ALsizei SamplesToDo);
 
-typedef struct EffectSources {
+typedef struct SourceEffect {
     ALboolean IsEnabled;
     ALuint    EffectSlot;
     ALuint    Send;
     ALenum    SrcType;
     ALsizei   Channels;
-} EffectSources;
+} SourceEffect;
 
 struct ALCdevice_struct {
     RefCount ref;
@@ -831,8 +831,8 @@ struct ALCcontext_struct {
     ALuint NumSources;
     almtx_t SourceLock;
 
-    /* Sources with effect state */
-    EffectSources EffSrcs;
+    /* Source with effect state */
+    SourceEffect SrcEff;
 
     vector_ALeffectslotPtr EffectSlotList;
     almtx_t EffectSlotLock;
