@@ -110,6 +110,7 @@ typedef struct ALsource {
 
     /* Source Effect*/
     SourceEffect SrcEff;
+    ALuint SourceChannels;
 } ALsource;
 
 void UpdateAllSourceProps(ALCcontext *context);

@@ -694,6 +694,7 @@ static const struct {
     DECL(AL_3D_SOURCES_SOFT),
     DECL(AL_2D_SOURCES_SOFT),
     DECL(AL_ALL_SOURCES_SOFT),
+    DECL(AL_SOURCE_CHANNELS_SOFT),
 };
 #undef DECL
 

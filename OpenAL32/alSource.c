@@ -174,6 +174,9 @@ typedef enum SourceProp {
     /* ALC_SOFT_device_clock */
     srcSampleOffsetClockSOFT = AL_SAMPLE_OFFSET_CLOCK_SOFT,
     srcSecOffsetClockSOFT = AL_SEC_OFFSET_CLOCK_SOFT,
+
+    /* AL_SOFT_source_effect */
+    srcChannelsSOFT = AL_SOURCE_CHANNELS_SOFT,
 } SourceProp;
 
 static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp prop, const ALfloat *values);
@@ -419,6 +422,7 @@ static ALint IntValsByProp(ALenum prop)
         case AL_SOURCE_RADIUS:
         case AL_SOURCE_RESAMPLER_SOFT:
         case AL_SOURCE_SPATIALIZE_SOFT:
+        case AL_SOURCE_CHANNELS_SOFT:
             return 1;
 
         case AL_POSITION:
@@ -480,6 +484,7 @@ static ALint Int64ValsByProp(ALenum prop)
         case AL_SOURCE_RADIUS:
         case AL_SOURCE_RESAMPLER_SOFT:
         case AL_SOURCE_SPATIALIZE_SOFT:
+        case AL_SOURCE_CHANNELS_SOFT:
             return 1;
 
         case AL_SAMPLE_OFFSET_LATENCY_SOFT:
@@ -842,12 +847,14 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
                 /* Source is now Static */
                 Source->SourceType = AL_STATIC;
                 Source->queue = newlist;
+                Source->SourceChannels = ChannelsFromUserFmt(newlist->buffers[0]->FmtChannels);
             }
             else
             {
                 /* Source is now Undetermined */
                 Source->SourceType = AL_UNDETERMINED;
                 Source->queue = NULL;
+                Source->SourceChannels = AL_NONE;
             }
             UnlockBufferList(device);
 
@@ -1409,6 +1416,10 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
 
         case AL_SOURCE_STATE:
             *values = GetSourceState(Source, GetSourceVoice(Source, Context));
+            return AL_TRUE;
+
+        case AL_SOURCE_CHANNELS_SOFT:
+            *values = Source->SourceChannels;
             return AL_TRUE;
 
         case AL_BUFFERS_QUEUED:
@@ -2862,6 +2873,7 @@ AL_API ALvoid AL_APIENTRY alSourceQueueBuffers(ALuint src, ALsizei nb, const ALu
 
     /* Source is now streaming */
     source->SourceType = AL_STREAMING;
+    source->SourceChannels = ChannelsFromUserFmt(BufferListStart->buffers[0]->FmtChannels);
 
     if(!(BufferList=source->queue))
         source->queue = BufferListStart;
@@ -2977,6 +2989,7 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 
     /* Source is now streaming */
     source->SourceType = AL_STREAMING;
+    source->SourceChannels = ChannelsFromUserFmt(BufferListStart->buffers[0]->FmtChannels);
 
     if(!(BufferList=source->queue))
         source->queue = BufferListStart;
@@ -3083,7 +3096,7 @@ AL_API ALvoid AL_APIENTRY alSourceUnqueueBuffers(ALuint src, ALsizei nb, ALuint 
         al_free(head);
         source->queue = next;
     }
-
+    source->SourceChannels = AL_NONE;
 done:
     UnlockSourceList(context);
     ALCcontext_DecRef(context);
@@ -3174,6 +3187,8 @@ static void InitSourceParams(ALsource *Source, ALsizei num_sends)
     Source->SrcEff.Send = 0; /*Send 0*/
     Source->SrcEff.SrcType = AL_NONE;
     Source->SrcEff.Channels = AL_NONE;
+
+    Source->SourceChannels = AL_NONE;
 }
 
 static void DeinitSource(ALsource *source, ALsizei num_sends)
