@@ -3096,7 +3096,6 @@ AL_API ALvoid AL_APIENTRY alSourceUnqueueBuffers(ALuint src, ALsizei nb, ALuint 
         al_free(head);
         source->queue = next;
     }
-    source->SourceChannels = AL_NONE;
 done:
     UnlockSourceList(context);
     ALCcontext_DecRef(context);
