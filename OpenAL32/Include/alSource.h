@@ -55,6 +55,7 @@ typedef struct ALsource {
     ALfloat   OuterGainHF;
 
     ALfloat AirAbsorptionFactor;
+    ALfloat AirAbsorptionGainHF;
     ALfloat RoomRolloffFactor;
     ALfloat DopplerFactor;
 

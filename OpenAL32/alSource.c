@@ -146,6 +146,8 @@ typedef enum SourceProp {
     srcDirectFilter = AL_DIRECT_FILTER,
     srcAuxSendFilter = AL_AUXILIARY_SEND_FILTER,
 
+    srcAirAbsorptionGainHF = AL_AIR_ABSORPTION_GAINHF_SOFT,
+
     /* AL_SOFT_direct_channels */
     srcDirectChannelsSOFT = AL_DIRECT_CHANNELS_SOFT,
 
@@ -278,6 +280,7 @@ static ALint FloatValsByProp(ALenum prop)
         case AL_REFERENCE_DISTANCE:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_DIRECT_FILTER_GAINHF_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
@@ -342,6 +345,7 @@ static ALint DoubleValsByProp(ALenum prop)
         case AL_REFERENCE_DISTANCE:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_DIRECT_FILTER_GAINHF_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
@@ -405,6 +409,7 @@ static ALint IntValsByProp(ALenum prop)
         case AL_REFERENCE_DISTANCE:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_DIRECT_FILTER_GAINHF_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
@@ -467,6 +472,7 @@ static ALint Int64ValsByProp(ALenum prop)
         case AL_REFERENCE_DISTANCE:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_DIRECT_FILTER_GAINHF_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
@@ -621,6 +627,13 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
             CHECKVAL(*values >= 0.0f && *values <= 10.0f);
 
             Source->AirAbsorptionFactor = *values;
+            DO_UPDATEPROPS();
+            return AL_TRUE;
+
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
+            CHECKVAL(*values >= 0.892f && *values <= 1.0f);
+
+            Source->AirAbsorptionGainHF = *values;
             DO_UPDATEPROPS();
             return AL_TRUE;
 
@@ -1096,6 +1109,7 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_DOPPLER_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_SOURCE_RADIUS:
             fvals[0] = (ALfloat)*values;
@@ -1201,6 +1215,7 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_DOPPLER_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_SOURCE_RADIUS:
             fvals[0] = (ALfloat)*values;
@@ -1301,6 +1316,10 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
 
         case AL_AIR_ABSORPTION_FACTOR:
             *values = Source->AirAbsorptionFactor;
+            return AL_TRUE;
+
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
+            *values = Source->AirAbsorptionGainHF;
             return AL_TRUE;
 
         case AL_ROOM_ROLLOFF_FACTOR:
@@ -1534,6 +1553,7 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_BYTE_OFFSET:
         case AL_DOPPLER_FACTOR:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SOURCE_RADIUS:
@@ -1638,6 +1658,7 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_BYTE_OFFSET:
         case AL_DOPPLER_FACTOR:
         case AL_AIR_ABSORPTION_FACTOR:
+        case AL_AIR_ABSORPTION_GAINHF_SOFT:
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SOURCE_RADIUS:
@@ -3275,6 +3296,7 @@ static void InitSourceParams(ALsource *Source, ALsizei num_sends)
     Source->WetGainAuto = AL_TRUE;
     Source->WetGainHFAuto = AL_TRUE;
     Source->AirAbsorptionFactor = 0.0f;
+    Source->AirAbsorptionGainHF = AIRABSORBGAINHF;
     Source->RoomRolloffFactor = 0.0f;
     Source->DopplerFactor = 1.0f;
     Source->HeadRelative = AL_FALSE;
@@ -3416,6 +3438,7 @@ static void UpdateSourceProps(ALsource *source, ALvoice *voice, ALsizei num_send
 
     props->AirAbsorptionFactor = source->AirAbsorptionFactor;
     props->RoomRolloffFactor = source->RoomRolloffFactor;
+    props->AirAbsorptionGainHF = source->AirAbsorptionGainHF;
     props->DopplerFactor = source->DopplerFactor;
 
     props->StereoPan[0] = source->StereoPan[0];

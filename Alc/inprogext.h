@@ -103,6 +103,12 @@ AL_API ALvoid AL_APIENTRY alGetSourceSendControlSOFT(ALuint source, ALuint send,
 #ifndef ALC_SOFT_close_info
 #define ALC_SOFT_close_info
 #define ALC_CLOSE_INFO_SOFT                      0x350
+
+#ifndef AL_SOFT_distance_attenuation_ex
+#define AL_SOFT_distance_effects
+#define AL_AIR_ABSORPTION_GAINHF_SOFT            0x2000E
+#define AL_MIN_AIR_ABSORPTION_GAINHF_SOFT        0.892f
+#define AL_MAX_AIR_ABSORPTION_GAINHF_SOFT        1.0f
 #endif
 
 #ifdef __cplusplus

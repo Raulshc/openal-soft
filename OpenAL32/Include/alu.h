@@ -210,6 +210,7 @@ struct ALvoiceProps {
     ALfloat   OuterGainHF;
 
     ALfloat AirAbsorptionFactor;
+    ALfloat AirAbsorptionGainHF;
     ALfloat RoomRolloffFactor;
     ALfloat DopplerFactor;
 

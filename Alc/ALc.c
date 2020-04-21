@@ -698,6 +698,8 @@ static const struct {
     DECL(AL_2D_SOURCES_SOFT),
     DECL(AL_ALL_SOURCES_SOFT),
     DECL(AL_SOURCE_CHANNELS_SOFT),
+
+    DECL(AL_AIR_ABSORPTION_GAINHF_SOFT),
 };
 #undef DECL
 
@@ -744,6 +746,7 @@ static const ALchar alExtList[] =
     "AL_SOFT_block_alignment "
     "AL_SOFT_deferred_updates "
     "AL_SOFT_direct_channels "
+    "AL_SOFTX_distance_attenuation_ex "
     "AL_SOFTX_events "
     "AL_SOFTX_filter_gain_ex "
     "AL_SOFTX_source_effect "
