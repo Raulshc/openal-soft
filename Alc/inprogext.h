@@ -80,6 +80,13 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 #endif
 #endif
 
+#ifndef AL_SOFT_distance_attenuation_ex
+#define AL_SOFT_distance_effects
+#define AL_AIR_ABSORPTION_GAINHF_SOFT            0x2000E
+#define AL_MIN_AIR_ABSORPTION_GAINHF_SOFT        0.892f
+#define AL_MAX_AIR_ABSORPTION_GAINHF_SOFT        1.0f
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
