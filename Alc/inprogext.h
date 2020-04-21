@@ -89,10 +89,14 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 typedef void(AL_APIENTRY*LPALATTACHEFFECTGENSOURCESSOFT)(ALuint effectSlot, ALenum param, ALuint send);
 typedef void(AL_APIENTRY*LPALDETACHEFFECTGENSOURCESSOFT)(void);
 typedef ALboolean(AL_APIENTRY*LPALISATTACHEFFECTGENSOURCESSOFT)(void);
+typedef void(AL_APIENTRY*LPALSOURCESENDCONTROLSOFT)(ALuint source, ALuint send, ALint current, ALint target);
+typedef void(AL_APIENTRY*LPALGETSOURCESENDCONTROLSOFT)(ALuint source, ALuint send, ALint *current, ALint *target);
 #ifdef AL_ALEXT_PROTOTYPES
 AL_API ALvoid AL_APIENTRY alAttachEffectGenSourcesSOFT(ALuint effectSlot, ALenum param, ALuint send);
 AL_API ALvoid AL_APIENTRY alDetachEffectGenSourcesSOFT(void);
 AL_API ALboolean AL_APIENTRY alIsAttachEffectGenSourcesSOFT(void);
+AL_API ALvoid AL_APIENTRY alSourceSendControlSOFT(ALuint source, ALuint send, ALint current, ALint target);
+AL_API ALvoid AL_APIENTRY alGetSourceSendControlSOFT(ALuint source, ALuint send, ALint *current, ALint *target);
 #endif
 #endif
 

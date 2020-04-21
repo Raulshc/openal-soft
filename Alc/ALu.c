@@ -1119,7 +1119,8 @@ static void CalcNonAttnSourceParams(ALvoice *voice, const struct ALvoiceProps *p
     DryGainLF = props->Direct.GainLF;
     for(i = 0;i < Device->NumAuxSends;i++)
     {
-        WetGain[i]  = clampf(props->Gain, props->MinGain, props->MaxGain);
+        ALfloat Mute = (props->Send[i].current == AL_3D_SOURCES_SOFT) ? 0.0f : 1.0f;
+        WetGain[i]  = clampf(props->Gain, props->MinGain, props->MaxGain) * Mute;
         WetGain[i] *= props->Send[i].Gain * Listener->Params.Gain;
         WetGain[i]  = minf(WetGain[i], GAIN_MIX_MAX);
         WetGainHF[i] = props->Send[i].GainHF;
@@ -1249,7 +1250,14 @@ static void CalcAttnSourceParams(ALvoice *voice, const struct ALvoiceProps *prop
     DryGainLF = 1.0f;
     for(i = 0;i < NumSends;i++)
     {
-        WetGain[i] = props->Gain;
+        ALfloat Mute;
+
+        if((props->Send[i].current == AL_3D_SOURCES_SOFT && voice->NumChannels != 1) ||
+           (props->Send[i].current == AL_2D_SOURCES_SOFT && voice->NumChannels == 1))
+            Mute = 0.0f;
+        else
+            Mute = 1.0f;
+        WetGain[i] = props->Gain * Mute;
         WetGainHF[i] = 1.0f;
         WetGainLF[i] = 1.0f;
     }

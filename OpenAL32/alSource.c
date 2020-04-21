@@ -763,6 +763,7 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
     ALeffectslot *slot = NULL;
     ALbufferlistitem *oldlist;
     ALfloat fvals[6];
+    ALuint oldchannels;
 
     switch(prop)
     {
@@ -833,6 +834,7 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
             }
 
             oldlist = Source->queue;
+            oldchannels = Source->SourceChannels;
             if(buffer != NULL)
             {
                 /* Add the selected buffer to a one-item queue */
@@ -871,6 +873,25 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
                         DecrementRef(&temp->buffers[i]->ref);
                 }
                 al_free(temp);
+            }
+
+            /* Check whether the channels of the source have changed */
+            if(oldchannels != Source->SourceChannels)
+            {
+                ALsizei i;
+                ALboolean update = AL_FALSE;
+
+                for(i=0; i<device->NumAuxSends; i++)
+                {
+                    if(Source->Send[i].current != Source->Send[i].target)
+                    {
+                        Source->Send[i].current = Source->Send[i].target;
+                        update = AL_TRUE;
+                    }
+                }
+
+                if(update)
+                    DO_UPDATEPROPS();
             }
             return AL_TRUE;
 
@@ -2772,6 +2793,7 @@ AL_API ALvoid AL_APIENTRY alSourceQueueBuffers(ALuint src, ALsizei nb, const ALu
     ALbufferlistitem *BufferListStart;
     ALbufferlistitem *BufferList;
     ALbuffer *BufferFmt = NULL;
+    ALuint oldchannels;
 
     if(nb == 0)
         return;
@@ -2873,6 +2895,7 @@ AL_API ALvoid AL_APIENTRY alSourceQueueBuffers(ALuint src, ALsizei nb, const ALu
 
     /* Source is now streaming */
     source->SourceType = AL_STREAMING;
+    oldchannels = source->SourceChannels;
     source->SourceChannels = ChannelsFromUserFmt(BufferListStart->buffers[0]->FmtChannels);
 
     if(!(BufferList=source->queue))
@@ -2883,6 +2906,29 @@ AL_API ALvoid AL_APIENTRY alSourceQueueBuffers(ALuint src, ALsizei nb, const ALu
         while((next=ATOMIC_LOAD(&BufferList->next, almemory_order_relaxed)) != NULL)
             BufferList = next;
         ATOMIC_STORE(&BufferList->next, BufferListStart, almemory_order_release);
+    }
+
+    if(oldchannels != source->SourceChannels)
+    {
+        ALboolean update = AL_FALSE;
+        ALvoice *voice = GetSourceVoice(source, context);
+
+        for(i=0; i<device->NumAuxSends; i++)
+        {
+            if(source->Send[i].current != source->Send[i].target)
+            {
+                source->Send[i].current = source->Send[i].target;
+                update = AL_TRUE;
+            }
+        }
+
+        if(update) 
+        {
+            if(SourceShouldUpdate(source, context) && voice != NULL)
+                UpdateSourceProps(source, voice, device->NumAuxSends, context);
+            else
+                ATOMIC_FLAG_CLEAR(&source->PropsClean, almemory_order_release);
+        }
     }
 
 done:
@@ -2899,6 +2945,7 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
     ALbuffer *BufferFmt = NULL;
     ALsource *source;
     ALsizei i;
+    ALuint oldchannels;
 
     if(nb == 0)
         return;
@@ -2989,6 +3036,7 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
 
     /* Source is now streaming */
     source->SourceType = AL_STREAMING;
+    oldchannels = source->SourceChannels;
     source->SourceChannels = ChannelsFromUserFmt(BufferListStart->buffers[0]->FmtChannels);
 
     if(!(BufferList=source->queue))
@@ -2999,6 +3047,29 @@ AL_API void AL_APIENTRY alSourceQueueBufferLayersSOFT(ALuint src, ALsizei nb, co
         while((next=ATOMIC_LOAD(&BufferList->next, almemory_order_relaxed)) != NULL)
             BufferList = next;
         ATOMIC_STORE(&BufferList->next, BufferListStart, almemory_order_release);
+    }
+
+    if(oldchannels != source->SourceChannels)
+    {
+        ALboolean update = AL_FALSE;
+        ALvoice *voice = GetSourceVoice(source, context);
+
+        for(i=0; i<device->NumAuxSends; i++)
+        {
+            if(source->Send[i].current != source->Send[i].target)
+            {
+                source->Send[i].current = source->Send[i].target;
+                update = AL_TRUE;
+            }
+        }
+
+        if(update) 
+        {
+            if(SourceShouldUpdate(source, context) && voice != NULL)
+                UpdateSourceProps(source, voice, device->NumAuxSends, context);
+            else
+                ATOMIC_FLAG_CLEAR(&source->PropsClean, almemory_order_release);
+        }
     }
 
 done:
@@ -3101,6 +3172,73 @@ done:
     ALCcontext_DecRef(context);
 }
 
+AL_API ALvoid AL_APIENTRY alSourceSendControlSOFT(ALuint source, ALuint send, ALint current, ALint target)
+{
+    ALCcontext *Context;
+    ALCdevice  *Device;
+    ALsource   *Source;
+
+    Context = GetContextRef();
+    if (!Context) return;
+
+    Device = Context->Device;
+
+    almtx_lock(&Context->PropLock);
+    LockSourceList(Context);
+    if ((Source = LookupSource(Context, source)) == NULL)
+        alSetError(Context, AL_INVALID_NAME, "Invalid source ID %u", source);
+    else if(!(send < (ALuint)Device->NumAuxSends))
+        alSetError(Context, AL_INVALID_VALUE, "Invalid send %u", send);
+    else if(!(current >= AL_3D_SOURCES_SOFT && current <= AL_ALL_SOURCES_SOFT))
+        alSetError(Context, AL_INVALID_VALUE, "Invalid value of current", current);
+    else if (!(current >= AL_3D_SOURCES_SOFT && current <= AL_ALL_SOURCES_SOFT))
+        alSetError(Context, AL_INVALID_VALUE, "Invalid value of target", target);
+    else
+    {
+        ALvoice *voice = GetSourceVoice(Source, Context);
+
+        Source->Send[send].current = current;
+        Source->Send[send].target  = target;
+
+        if(SourceShouldUpdate(Source, Context) && voice != NULL)
+            UpdateSourceProps(Source, voice, Device->NumAuxSends, Context);
+        else
+            ATOMIC_FLAG_CLEAR(&Source->PropsClean, almemory_order_release);
+    }
+    UnlockSourceList(Context);
+    almtx_unlock(&Context->PropLock);
+
+    ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alGetSourceSendControlSOFT(ALuint source, ALuint send, ALint *current, ALint *target)
+{
+    ALCcontext *Context;
+    ALCdevice  *Device;
+    ALsource   *Source;
+
+    Context = GetContextRef();
+    if(!Context) return;
+
+    Device = Context->Device;
+
+    LockSourceList(Context);
+    if((Source=LookupSource(Context, source)) == NULL)
+        alSetError(Context, AL_INVALID_NAME, "Invalid source ID %u", source);
+    else if(!(current && target))
+        alSetError(Context, AL_INVALID_VALUE, "NULL pointer");
+    else if(!(send < (ALuint)Device->NumAuxSends))
+        alSetError(Context, AL_INVALID_VALUE, "Invalid send %u", send);
+    else
+    {
+        *current = Source->Send[send].current;
+        *target  = Source->Send[send].target;
+    }
+    UnlockSourceList(Context);
+
+    ALCcontext_DecRef(Context);
+}
+
 
 static void InitSourceParams(ALsource *Source, ALsizei num_sends)
 {
@@ -3165,6 +3303,8 @@ static void InitSourceParams(ALsource *Source, ALsizei num_sends)
         Source->Send[i].HFReference = LOWPASSFREQREF;
         Source->Send[i].GainLF = 1.0f;
         Source->Send[i].LFReference = HIGHPASSFREQREF;
+        Source->Send[i].current = AL_ALL_SOURCES_SOFT;
+        Source->Send[i].target = AL_ALL_SOURCES_SOFT;
     }
 
     Source->Offset = 0.0;
@@ -3297,6 +3437,8 @@ static void UpdateSourceProps(ALsource *source, ALvoice *voice, ALsizei num_send
         props->Send[i].HFReference = source->Send[i].HFReference;
         props->Send[i].GainLF = source->Send[i].GainLF;
         props->Send[i].LFReference = source->Send[i].LFReference;
+        props->Send[i].current = source->Send[i].current;
+        props->Send[i].target = source->Send[i].target;
     }
 
     /* Set the new container for updating internal parameters. */

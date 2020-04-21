@@ -80,6 +80,8 @@ typedef struct ALsource {
         ALfloat HFReference;
         ALfloat GainLF;
         ALfloat LFReference;
+        ALint current;
+        ALint target;
     } *Send;
 
     /**

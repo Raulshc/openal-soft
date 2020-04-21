@@ -301,6 +301,8 @@ static const struct {
     DECL(alAttachEffectGenSourcesSOFT),
     DECL(alDetachEffectGenSourcesSOFT),
     DECL(alIsAttachEffectGenSourcesSOFT),
+    DECL(alSourceSendControlSOFT),
+    DECL(alGetSourceSendControlSOFT),
 };
 #undef DECL
 
@@ -2312,6 +2314,8 @@ static ALCenum UpdateDeviceParams(ALCdevice *device, const ALCint *attrList)
                         source->Send[s].HFReference = LOWPASSFREQREF;
                         source->Send[s].GainLF = 1.0f;
                         source->Send[s].LFReference = HIGHPASSFREQREF;
+                        source->Send[s].current = AL_ALL_SOURCES_SOFT;
+                        source->Send[s].target = AL_ALL_SOURCES_SOFT;
                     }
                 }
 
